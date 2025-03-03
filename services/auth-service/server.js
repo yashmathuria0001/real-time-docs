@@ -1,15 +1,18 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import sequelize from "./config/database.js";
+import sequelize from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 
 dotenv.config();
 
 const app = express();
 app.use(express.json());
-app.use(cors());
-
+app.use(cors({
+    origin: "http://localhost:3000", // Allow frontend domain
+    credentials: true, // Enable cookies in CORS
+  }));
+  app.use(cookieParser());
 // Routes
 app.use("/api/auth", authRoutes);
 

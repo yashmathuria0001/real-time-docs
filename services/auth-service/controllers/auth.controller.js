@@ -26,8 +26,20 @@ export const login = async (req, res) => {
 
     const token = jwt.sign({ userId: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "1h" });
 
+    res.cookie("token", token, {
+        httpOnly: true, // Prevents access from JavaScript
+        secure: process.env.NODE_ENV === "production", // HTTPS in production
+        sameSite: "Strict",
+        maxAge: 60 * 60 * 1000, // 1 hour
+      });
+
     res.json({ token, user });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
+
+export const logout = async (req, res) => {
+    res.clearCookie("token", { httpOnly: true, sameSite: "Strict" });
+    res.json({ message: "Logged out successfully" });
+  };
