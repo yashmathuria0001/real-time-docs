@@ -1,42 +1,42 @@
 import express from "express";
+import proxy from "express-http-proxy";
 import dotenv from "dotenv";
 import cors from "cors";
-import morgan from "morgan";
-import { createProxyMiddleware } from "http-proxy-middleware";
-
 dotenv.config();
 
 const app = express();
 app.use(express.json());
-app.use(cors());
-app.use(morgan("dev"));
+app.use(
+  cors({
+    origin: ["http://localhost:5173", "http://localhost:3000"], // Allow multiple frontend origins
+    credentials: true, // Allow cookies/auth headers
+    methods: ["GET", "POST", "PUT", "DELETE"], // Allowed methods
+    allowedHeaders: ["Content-Type", "Authorization"], // Allowed headers
+  })
+);
 
-// Proxy to Auth Service
 app.use(
   "/api/auth",
-  createProxyMiddleware({
-    target: process.env.AUTH_SERVICE_URL,
-    changeOrigin: true,
-  })
-);
-
-//Proxy to Document Service
-app.use(
-  "/api/documents",
-  createProxyMiddleware({
-    target: process.env.DOCUMENT_SERVICE_URL,
-    changeOrigin: true,
-  })
-);
-
-// Proxy to Collaboration Service
-app.use(
-  "/api/collaboration",
-  createProxyMiddleware({
-    target: process.env.COLLAB_SERVICE_URL,
-    changeOrigin: true,
+  proxy(process.env.AUTH_SERVICE_URL, {
+    proxyReqPathResolver: (req) => {
+      const newPath = `/api/auth${req.url}`;
+      
+      return newPath;
+    },
+    // proxyReqOptDecorator: (proxyReqOpts, srcReq) => {
+    //   proxyReqOpts.headers["X-API-Gateway"] = "express-http-proxy";
+    //   return proxyReqOpts;
+    // },
+    // userResDecorator: async (proxyRes, proxyResData, req, res) => {
+    
+    //   return proxyResData;
+    // },
+    proxyErrorHandler: (err, res, next) => {
+      
+      res.status(500).json({ error: "API Gateway Proxy Error" });
+    },
   })
 );
 
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log(`🚀 API Gateway running on port ${PORT}`));
+app.listen(PORT, () => console.log(`API Gateway running on port ${PORT}`));

@@ -9,3 +9,6 @@ export const registerUser = async (userData) => {
 export const loginUser = async (userData) => {
   return axios.post(`${API_GATEWAY_URL}/login`, userData);
 };
+export const logoutUser = async () => {
+    return axios.post(`${API_GATEWAY_URL}/logout`, {}, { withCredentials: true });
+  };
